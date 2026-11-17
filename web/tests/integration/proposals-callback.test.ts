@@ -138,6 +138,21 @@ describe("POST /api/internal/nights/:id/proposals", () => {
     expect((await getNight(db, nightId))?.status).toBe("generating");
   });
 
+  it("rejects a Proposal that ends before it starts with 400", async () => {
+    const { nightId, idempotencyKey } = await generatingNight();
+
+    const response = await callback(nightId, {
+      idempotencyKey,
+      proposals: [
+        proposal("Dinner"),
+        { ...proposal("Backwards"), endAt: "2026-11-20T18:00:00+08:00" },
+      ],
+    });
+
+    expect(response.status).toBe(400);
+    expect((await getNight(db, nightId))?.status).toBe("generating");
+  });
+
   it("rejects an unknown idempotency key with 404", async () => {
     const { nightId } = await generatingNight();
 

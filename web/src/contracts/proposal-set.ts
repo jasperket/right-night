@@ -15,6 +15,9 @@ export const Proposal = z.object({
   weatherNote: z.string(),
   rationale: z.string(),
   source: z.enum(["ai", "fallback"]),
+}).refine((p) => Date.parse(p.endAt) > Date.parse(p.startAt), {
+  message: "endAt must be after startAt",
+  path: ["endAt"],
 });
 
 // n8n → app `POST /api/internal/nights/:id/proposals` body.
