@@ -22,7 +22,7 @@ export default defineConfig({
   webServer: [
     {
       // Stands in for n8n: verifies the webhook and calls back with 2 Proposals.
-      command: "node tests/e2e/fake-n8n.mjs",
+      command: "node tests/e2e/fake-n8n.ts",
       url: `http://localhost:${fakeN8nPort}`,
       reuseExistingServer: false,
       env: { FAKE_N8N_PORT: String(fakeN8nPort), N8N_SIGNING_SECRET: signingSecret },
