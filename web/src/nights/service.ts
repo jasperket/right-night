@@ -1,10 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, eq } from "drizzle-orm";
+import { z } from "zod";
 import type { NightContext } from "@/contracts/night-context";
 import type { ProposalSet } from "@/contracts/proposal-set";
 import type { Db } from "@/db/client";
 import { nights, proposals, workflowRuns } from "@/db/schema";
 import { transition, type NightEvent, type NightState } from "@/domain/night";
+
+// Night ids are uuids; anything else is an unknown Night, not a database error.
+const isNightId = (id: string) => z.uuid().safeParse(id).success;
 
 export async function createNight(db: Db) {
   const [night] = await db.insert(nights).values({}).returning({ id: nights.id });
@@ -12,6 +16,7 @@ export async function createNight(db: Db) {
 }
 
 export async function getNight(db: Db, id: string) {
+  if (!isNightId(id)) return null;
   const [night] = await db
     .select({ id: nights.id, status: nights.status })
     .from(nights)
@@ -54,6 +59,7 @@ export async function startGeneration(
   nightId: string,
   deps: { appBaseUrl: string; notifyN8n: (context: NightContext) => Promise<void> },
 ): Promise<StartGenerationResult> {
+  if (!isNightId(nightId)) return { ok: false, error: "Night not found" };
   const idempotencyKey = randomUUID();
   const moved = await db.transaction(async (tx) => {
     const result = await moveNight(tx, nightId, "start_generation");
@@ -100,6 +106,7 @@ export async function storeProposals(
   nightId: string,
   set: ProposalSet,
 ): Promise<StoreProposalsResult> {
+  if (!isNightId(nightId)) return { status: "not_found" };
   return db.transaction(async (tx) => {
     const [run] = await tx
       .select({ id: workflowRuns.id, status: workflowRuns.status })

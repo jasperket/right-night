@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { z } from "zod";
 import { getDb } from "@/db";
 import { getNight } from "@/nights/service";
 import { generateProposals } from "../actions";
@@ -15,7 +14,7 @@ const time = new Intl.DateTimeFormat("en", {
 
 async function NightView({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const night = z.uuid().safeParse(id).success ? await getNight(getDb().db, id) : null;
+  const night = await getNight(getDb().db, id);
   if (!night) notFound();
 
   return (

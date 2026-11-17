@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { parseEnv } from "@/config/env";
 import { ProposalSet } from "@/contracts/proposal-set";
 import { getDb } from "@/db";
@@ -32,9 +31,6 @@ export async function POST(
     return Response.json({ error: parsed.error.issues }, { status: 400 });
   }
 
-  if (!z.uuid().safeParse(id).success) {
-    return Response.json({ error: "unknown night or run" }, { status: 404 });
-  }
   const result = await storeProposals(getDb().db, id, parsed.data);
   switch (result.status) {
     case "stored":
