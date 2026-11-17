@@ -1,4 +1,4 @@
-import { parseEnv } from "@/config/env";
+import { getEnv } from "@/config/env";
 import { ProposalSet } from "@/contracts/proposal-set";
 import { getDb } from "@/db";
 import { SIGNATURE_HEADER, TIMESTAMP_HEADER, verifyRequest } from "@/lib/signing";
@@ -13,7 +13,7 @@ export async function POST(
   const body = await request.text();
 
   const verified = verifyRequest({
-    secret: parseEnv(process.env).N8N_SIGNING_SECRET,
+    secret: getEnv().N8N_SIGNING_SECRET,
     body,
     timestamp: request.headers.get(TIMESTAMP_HEADER),
     signature: request.headers.get(SIGNATURE_HEADER),

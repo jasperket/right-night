@@ -26,3 +26,12 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
   }
   return result.data;
 }
+
+let cached: Env | undefined;
+
+// The server's environment, validated once. instrumentation.ts calls this at startup so a
+// misconfigured server fails to boot instead of failing individual requests.
+export function getEnv(): Env {
+  cached ??= parseEnv(process.env);
+  return cached;
+}

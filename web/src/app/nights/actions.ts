@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
-import { parseEnv } from "@/config/env";
+import { getEnv } from "@/config/env";
 import { getDb } from "@/db";
 import { n8nWebhook } from "@/n8n/client";
 import { createNight, startGeneration } from "@/nights/service";
@@ -15,7 +15,7 @@ export async function planNight() {
 }
 
 export async function generateProposals(nightId: string) {
-  const env = parseEnv(process.env);
+  const env = getEnv();
   const callN8n = n8nWebhook({
     baseUrl: env.N8N_WEBHOOK_BASE_URL,
     secret: env.N8N_SIGNING_SECRET,
