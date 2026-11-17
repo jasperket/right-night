@@ -69,6 +69,23 @@ jobs:
   e2e:
     name: End-to-end (Playwright)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: rightnight
+          POSTGRES_PASSWORD: rightnight-dev
+          POSTGRES_DB: rightnight_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U rightnight -d rightnight_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    # Playwright's global setup creates and migrates rightnight_e2e.
+    env:
+      E2E_DATABASE_URL: postgres://rightnight:rightnight-dev@localhost:5433/rightnight_e2e
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4

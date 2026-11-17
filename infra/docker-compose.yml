@@ -38,8 +38,16 @@ services:
       TZ: ${TZ:-UTC}
       N8N_DIAGNOSTICS_ENABLED: "false"
       N8N_SECURE_COOKIE: "false"
+      # Shared with the app for signed webhooks and callbacks (ADR 0002).
+      N8N_SIGNING_SECRET: ${N8N_SIGNING_SECRET}
+      # Code nodes read the secret via $env and sign with node:crypto.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
     ports:
       - "${N8N_PORT:-5678}:5678"
+    # Lets n8n call the app running on the host (APP_BASE_URL=http://host.docker.internal:3000).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - n8n-data:/home/node/.n8n
     depends_on:
