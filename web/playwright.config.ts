@@ -1,14 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
+import { e2eDatabaseUrl } from "./tests/e2e/database";
 
 const port = 3100;
 const fakeN8nPort = 3199;
 const signingSecret = "e2e-test-signing-secret-32-chars-long";
-const databaseUrl =
-  process.env.TEST_DATABASE_URL ??
-  "postgres://rightnight:rightnight-dev@localhost:5433/rightnight_test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -34,7 +33,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: {
-        DATABASE_URL: databaseUrl,
+        DATABASE_URL: e2eDatabaseUrl,
         N8N_SIGNING_SECRET: signingSecret,
         N8N_WEBHOOK_BASE_URL: `http://localhost:${fakeN8nPort}/webhook`,
         APP_BASE_URL: `http://localhost:${port}`,
