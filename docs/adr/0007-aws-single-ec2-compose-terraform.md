@@ -4,7 +4,7 @@
 - Date: 2026-11-17
 
 ## Context
-The app, n8n and Postgres need to run somewhere always on for a live demo. AWS experience is valuable for the job hunt, but managed AWS services have fixed hourly floors that are expensive for a near-zero-traffic app.
+The app, n8n and Postgres need to run somewhere always on for a live demo. The project should also show real AWS experience, but managed AWS services have fixed hourly floors that are expensive for a near-zero-traffic app.
 
 ## Decision
 - **Compute:** one Graviton EC2 instance (t4g.small, 2 GB) with a 20 GB gp3 volume and an Elastic IP, running the Compose stack: web, n8n, Postgres, Caddy.
