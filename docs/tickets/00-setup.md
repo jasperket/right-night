@@ -21,3 +21,8 @@ An empty but fully wired repo: the app runs locally, tests run in CI, and Postgr
 
 ## Tests
 - Example unit test, an integration test that connects to Postgres, and a Playwright test that loads the home page.
+
+## Name check (2026-11-17)
+- No app called "Right Night" turned up in a web search; closest is a nightlife planner, "YourNightOut".
+- RDAP: `rightnight.app`, `rightnight.dev`, `rightnight.io` and `getrightnight.com` are unregistered; `rightnight.com` is taken.
+- GitHub repo: `jasperket/right-night`.
