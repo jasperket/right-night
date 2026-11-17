@@ -16,6 +16,8 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}`,
     trace: "on-first-retry",
+    // Differs from the app server's TZ below, so times must be formatted in the viewer's zone.
+    timezoneId: "Asia/Manila",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
@@ -36,6 +38,7 @@ export default defineConfig({
         N8N_SIGNING_SECRET: signingSecret,
         N8N_WEBHOOK_BASE_URL: `http://localhost:${fakeN8nPort}/webhook`,
         APP_BASE_URL: `http://localhost:${port}`,
+        TZ: "UTC",
       },
     },
   ],

@@ -3,14 +3,10 @@ import { Suspense } from "react";
 import { getDb } from "@/db";
 import { getNight } from "@/nights/service";
 import { generateProposals } from "../actions";
+import { LocalTimeRange } from "./local-time-range";
 import { RefreshWhileGenerating } from "./refresh-while-generating";
 
 const money = new Intl.NumberFormat("en", { maximumFractionDigits: 0 });
-const time = new Intl.DateTimeFormat("en", {
-  weekday: "short",
-  hour: "numeric",
-  minute: "2-digit",
-});
 
 async function NightView({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -62,7 +58,11 @@ async function NightView({ params }: { params: Promise<{ id: string }> }) {
             >
               <h2 className="text-lg font-semibold">{proposal.title}</h2>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                {time.format(proposal.startAt)} – {time.format(proposal.endAt)} · ~
+                <LocalTimeRange
+                  start={proposal.startAt.toISOString()}
+                  end={proposal.endAt.toISOString()}
+                />{" "}
+                · ~
                 {money.format(proposal.estCostPp)} per person
               </p>
               <p className="mt-2">{proposal.summary}</p>

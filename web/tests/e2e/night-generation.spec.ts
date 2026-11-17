@@ -12,6 +12,8 @@ test("organizer creates a Night, generates and sees 2 Proposals", async ({ page 
   await expect(proposals).toHaveCount(2);
   await expect(page.getByRole("heading", { name: "Ramen and arcade" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Rooftop karaoke" })).toBeVisible();
+  // The fake n8n's 18:00+08:00, shown in the viewer's Asia/Manila time.
+  await expect(proposals.first()).toContainText("Fri 6:00 PM – Fri 8:00 PM");
 });
 
 test("organizer retries after n8n could not be reached", async ({ page, request }) => {
