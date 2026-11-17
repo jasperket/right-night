@@ -32,6 +32,20 @@ async function NightView({ params }: { params: Promise<{ id: string }> }) {
         </form>
       )}
 
+      {night.status === "generation_failed" && (
+        <>
+          <p>We couldn&apos;t generate plans for this Night.</p>
+          <form action={generateProposals.bind(null, night.id)}>
+            <button
+              type="submit"
+              className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            >
+              Try again
+            </button>
+          </form>
+        </>
+      )}
+
       {night.status === "generating" && (
         <>
           <p>Finding plans for your Night…</p>

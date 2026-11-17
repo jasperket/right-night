@@ -32,14 +32,21 @@ export async function getNight(db: Db, id: string) {
 
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
-async function moveNight(tx: Tx, id: string, event: NightEvent) {
+async function moveNight(
+  tx: Tx,
+  id: string,
+  event: NightEvent | ((status: NightState) => NightEvent),
+) {
   const [night] = await tx
     .select({ status: nights.status })
     .from(nights)
     .where(eq(nights.id, id))
     .for("update");
   if (!night) return { ok: false as const, error: "Night not found" };
-  const result = transition(night.status, event);
+  const result = transition(
+    night.status,
+    typeof event === "function" ? event(night.status) : event,
+  );
   if (result.ok) {
     await tx
       .update(nights)
@@ -53,7 +60,9 @@ export type StartGenerationResult =
   | { ok: true; state: NightState }
   | { ok: false; error: string };
 
-// collecting → generating, records a workflow run, then calls n8n after commit (ADR 0002).
+// collecting → generating (or generation_failed → generating on retry), records a workflow
+// run, then calls n8n after commit (ADR 0002). If n8n can't be reached, the Night moves to
+// generation_failed so the organizer can retry.
 export async function startGeneration(
   db: Db,
   nightId: string,
@@ -62,9 +71,13 @@ export async function startGeneration(
   if (!isNightId(nightId)) return { ok: false, error: "Night not found" };
   const idempotencyKey = randomUUID();
   const moved = await db.transaction(async (tx) => {
-    const result = await moveNight(tx, nightId, "start_generation");
+    const result = await moveNight(tx, nightId, (status) =>
+      status === "generation_failed" ? "retry_generation" : "start_generation",
+    );
     if (result.ok) {
-      await tx.insert(workflowRuns).values({ nightId, kind: "generate", idempotencyKey });
+      await tx
+        .insert(workflowRuns)
+        .values({ nightId, kind: "generate", idempotencyKey, attempts: 1 });
     }
     return result;
   });
@@ -76,22 +89,26 @@ export async function startGeneration(
       idempotencyKey,
       callbackUrl: new URL(`/api/internal/nights/${nightId}/proposals`, deps.appBaseUrl).href,
     });
-    await db
-      .update(workflowRuns)
-      .set({ attempts: 1, updatedAt: new Date() })
-      .where(eq(workflowRuns.idempotencyKey, idempotencyKey));
+    return moved;
   } catch (error) {
-    // The Night stays in generating; the stuck run is visible for a retry (ticket 04).
-    await db
-      .update(workflowRuns)
-      .set({
-        attempts: 1,
-        lastError: error instanceof Error ? error.message : String(error),
-        updatedAt: new Date(),
-      })
-      .where(eq(workflowRuns.idempotencyKey, idempotencyKey));
+    const lastError = error instanceof Error ? error.message : String(error);
+    return db.transaction(async (tx) => {
+      // Only a run still pending failed; a callback may already have succeeded it.
+      const failed = await tx
+        .update(workflowRuns)
+        .set({ status: "failed", lastError, updatedAt: new Date() })
+        .where(
+          and(
+            eq(workflowRuns.idempotencyKey, idempotencyKey),
+            eq(workflowRuns.status, "pending"),
+          ),
+        )
+        .returning({ id: workflowRuns.id });
+      if (failed.length === 0) return moved;
+      const result = await moveNight(tx, nightId, "generation_exhausted");
+      return result.ok ? result : moved;
+    });
   }
-  return moved;
 }
 
 export type StoreProposalsResult =

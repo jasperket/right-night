@@ -48,13 +48,23 @@ async function deliver({ callbackUrl, idempotencyKey }) {
   if (!res.ok) console.error("callback failed", res.status, await res.text());
 }
 
+// Night ids whose next night-generate webhook answers 503, set by tests via /control/fail/<id>.
+const failNext = new Set();
+
 createServer((req, res) => {
   let body = "";
   req.on("data", (chunk) => (body += chunk));
   req.on("end", () => {
     if (req.method === "GET") return res.writeHead(200).end("ok");
+    const control = req.url.match(/^\/control\/fail\/([^/]+)$/);
+    if (control) {
+      failNext.add(control[1]);
+      return res.writeHead(204).end();
+    }
     if (req.url !== "/webhook/night-generate") return res.writeHead(404).end();
     if (!verified(req, body)) return res.writeHead(401).end();
+    const { nightId } = JSON.parse(body);
+    if (failNext.delete(nightId)) return res.writeHead(503).end();
     res.writeHead(200, { "content-type": "application/json" }).end('{"accepted":true}');
     setTimeout(() => deliver(JSON.parse(body)).catch(console.error), 300);
   });
